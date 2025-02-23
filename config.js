@@ -5,13 +5,6 @@ export const discordConfig = {
     EN_SAN_PEPE: '¡HOY ES SAN PEPE!',
     MOD: 'Moderando'
   },
-  status_type: {
-    PLAYING: 'Playing',
-    STREAMING: 'Streaming',
-    LISTENING: 'Listening',
-    WATCHING: 'Watching',
-    COMPETING: 'Competing'
-  },
   COLOR: '#00ace2',
   OWNER_ID: '789591730907381760'
 }
