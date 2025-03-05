@@ -20,7 +20,7 @@ export async function loadSlash (client) {
 
         // Validar que el comando tenga 'data' y un nombre
         if (!command.default || !command.default.data || !command.default.data.name) {
-          console.warn(`⚠️  El archivo ${file} no tiene una propiedad 'data.name'. Se omitirá.`)
+          console.warn(`⚠️ El archivo ${file} no tiene una propiedad 'data.name'. Se omitirá.`)
           continue
         }
 
