@@ -1,0 +1,1 @@
+    console.log(`🔘 Se han cargado ${client.buttons.size} botones`.cyan)

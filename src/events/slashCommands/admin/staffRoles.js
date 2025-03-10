@@ -24,7 +24,7 @@ export default {
     // Crear el botón
     const row = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
-        .setCustomId('ping_button')
+        .setCustomId('miBoton')
         .setLabel('Haz clic aquí')
         .setStyle(ButtonStyle.Primary)
     )
@@ -37,7 +37,13 @@ export default {
     const collector = interaction.channel.createMessageComponentCollector({ filter, time: 15000 })
 
     collector.on('collect', async (i) => {
-      await interaction.followUp({ content: 'Secret Pong!', flags: MessageFlags.Ephemeral, allowed_mentions: { parse: [] } })
+      await interaction.followUp({
+        content: 'Secret Pong!',
+        flags: MessageFlags.Ephemeral,
+        allowed_mentions: {
+          parse: []
+        }
+      })
     })
 
     collector.on('end', () => {

@@ -17,9 +17,9 @@ import { InstagramAPIClient } from './src/services/InstagramAPIClient/instagram.
 import { stateError } from './src/utilities/stateError.js'
 
 // 📌 Importar handlers para Slash Commands, eventos y botones
-import { loadSlash } from './src/handlers/slashHandler.js'
-import { loadEvents } from './src/handlers/eventHandler.js'
-import { handleButtonInteraction } from './src/handlers/buttonHandler.js'
+import { loadSlash } from './src/events/handlers/slashHandler.js'
+// import { loadEvents } from './src/events/handlers/eventHandler.js'
+import { loadButtons } from './src/events/handlers/buttonHandler.js'
 
 // 📌 Cargar las variables de entorno
 process.loadEnvFile()
@@ -45,7 +45,7 @@ const client = new Client({
     ]
   },
   allowedMentions: { // Permitir menciones en mensajes
-    parse: ['users', 'roles', 'everyone', 'here'],
+    parse: ['users', 'roles', 'everyone'],
     repliedUser: true
   }
 })
@@ -58,11 +58,11 @@ export const INSTAGRAM_CLIENT = new InstagramAPIClient(instagramConfig.BASE_URL,
 // 📌 Manejo de interacciones (Slash Commands y Botones)
 client.on('interactionCreate', async (interaction) => {
   // 📍 Manejar Slash Commands
-  if (interaction.isCommand()) {
+  if (interaction.isChatInputCommand()) { // Cambiado de isCommand() a isChatInputCommand()
     const COMMAND = client.slashCommands.get(interaction.commandName)
     if (!COMMAND) return // Si el comando no existe, salir
 
-    // 📌 Extraer argumentos del comando
+    // 📌 Extraer argumentos del comando (si los necesitas)
     const ARGS = []
     for (const OPTION of interaction.options.data) {
       if (OPTION.type === 1) { // Subcomandos
@@ -74,20 +74,22 @@ client.on('interactionCreate', async (interaction) => {
         ARGS.push(OPTION.value)
       }
     }
-
-    try {
-      await COMMAND.execute(client, interaction, ARGS) // Ejecutar el comando
-    } catch (error) {
+    try { // 📌 Ejecutar el comando
+      await COMMAND.execute(interaction, client, ARGS)
+    } catch (error) { // Manejar errores
       console.error(error)
-      await interaction.reply({ content: 'Hubo un error al ejecutar el comando', ephemeral: true })
-    }
-  // 📍 Manejar Botones
-  } else if (interaction.isButton()) {
-    try {
-      await handleButtonInteraction(interaction) // Llamar al handler de botones
-    } catch (error) {
-      console.error(`❌ Error en el botón: ${error}`)
-      await interaction.reply({ content: 'Hubo un error con el botón.', ephemeral: true })
+      if (interaction.replied || interaction.deferred) {
+        await interaction.followUp({
+          content: '<:no:1288631410558767156> Hubo un error al ejecutar el comando',
+          ephemeral: true
+        })
+      } else {
+        await interaction.reply({
+          content: '<:no:1288631410558767156> Hubo un error al ejecutar el comando',
+          ephemeral: true,
+          allowed_mentions: { parse: ['users', 'roles', 'everyone'] } // No incluyas 'here'
+        })
+      }
     }
   }
 })
@@ -132,11 +134,20 @@ client.on('ready', async () => {
     stateError(client)
   }
 
+  // 📍 Manejar Botones
+  try {
+    console.log('🔄 Registrando botones'.cyan)
+    await loadButtons(client)
+    console.log(`✅ Se han cargado ${client.buttons.size} botones`.green)
+  } catch (error) {
+    console.error('❌ Error al iniciar handlerButtons'.red, error)
+    stateError(client)
+  }
   // 📌 Cargar eventos
-  await loadEvents(client)
+  /* await loadEvents(client)
     .then(() => console.log('✅ Eventos cargados correctamente'.green))
     .catch((error) => {
       console.error(`❌ Error al cargar los eventos: ${error}`.red)
       stateError(client)
-    })
+    }) */
 })
