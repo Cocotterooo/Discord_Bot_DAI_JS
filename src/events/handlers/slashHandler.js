@@ -1,4 +1,4 @@
-import { readdir } from 'fs/promises'
+import { readdir, stat } from 'fs/promises'
 import { join, dirname } from 'path'
 import { fileURLToPath, pathToFileURL } from 'url'
 
@@ -7,29 +7,43 @@ const __dirname = dirname(__filename)
 
 export async function loadSlash (client) {
   const slashCommands = join(__dirname, '..', 'slashCommands')
-  const folders = await readdir(slashCommands)
+  await scanDirectoryForCommands(slashCommands, client)
+}
 
-  for (const folder of folders) {
-    const commandFiles = await readdir(join(slashCommands, folder))
+async function scanDirectoryForCommands (directory, client) {
+  const items = await readdir(directory)
 
-    for (const file of commandFiles) {
-      try {
-        // Convertir la ruta a una URL válida para ESM
-        const commandPath = pathToFileURL(join(slashCommands, folder, file)).href
-        const command = await import(commandPath)
+  for (const item of items) {
+    const itemPath = join(directory, item)
+    const stats = await stat(itemPath)
 
-        // Validar que el comando tenga 'data' y un nombre
-        if (!command.default || !command.default.data || !command.default.data.name) {
-          console.warn(`⚠️ El archivo ${file} no tiene una propiedad 'data.name'. Se omitirá.`)
-          continue
-        }
+    if (stats.isDirectory()) {
+      // Recursively scan subdirectories
+      await scanDirectoryForCommands(itemPath, client)
+      continue
+    }
 
-        // Agregar el comando a la colección
-        client.slashCommands.set(command.default.data.name, command.default)
-        console.log(`🔵 (/) Comando cargado: ${command.default.data.name}`.blue)
-      } catch (error) {
-        console.error(`❌ Error al cargar el comando ${file}:`, error)
+    // Only process JavaScript files
+    if (!item.endsWith('.js') && !item.endsWith('.mjs')) {
+      continue
+    }
+
+    try {
+      // Convert path to a valid URL for ESM
+      const commandPath = pathToFileURL(itemPath).href
+      const command = await import(commandPath)
+
+      // Validate command has 'data' and a name
+      if (!command.default || !command.default.data || !command.default.data.name) {
+        console.warn(`⚠️ El archivo ${item} no tiene una propiedad 'data.name'. Se omitirá.`)
+        continue
       }
+
+      // Add command to collection
+      client.slashCommands.set(command.default.data.name, command.default)
+      console.log(`🔵 (/) Comando cargado: ${command.default.data.name}`)
+    } catch (error) {
+      console.error(`❌ Error al cargar el comando ${item}:`, error)
     }
   }
 }

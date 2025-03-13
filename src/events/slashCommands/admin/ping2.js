@@ -12,6 +12,6 @@ export default {
       .setDescription(`🏓 ${client.ws.ping}ms`)
       .setColor('#e00000')
 
-    await interaction.reply({ embeds: [embed] })
+    await interaction.reply({ embeds: [embed] }) // Pasar como un array porque si no no puede añadir el nuevo embed
   }
 }
