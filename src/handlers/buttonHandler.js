@@ -6,7 +6,7 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
 export async function loadButtons (client) {
-  const buttonsPath = join(__dirname, '..', 'buttons')
+  const buttonsPath = join(__dirname, '..', 'events', 'buttons')
   const folders = await readdir(buttonsPath)
 
   // Inicializar colección de botones si no existe

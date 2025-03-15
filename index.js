@@ -17,9 +17,9 @@ import { InstagramAPIClient } from './src/services/InstagramAPIClient/instagram.
 import { stateError } from './src/utilities/stateError.js'
 
 // 📌 Importar handlers para Slash Commands, eventos y botones
-import { loadSlash } from './src/events/handlers/slashHandler.js'
+import { loadSlash } from './src/handlers/slashHandler.js'
 // import { loadEvents } from './src/events/handlers/eventHandler.js'
-import { loadButtons } from './src/events/handlers/buttonHandler.js'
+import { loadButtons } from './src/handlers/buttonHandler.js'
 
 // 📌 Cargar las variables de entorno
 process.loadEnvFile()

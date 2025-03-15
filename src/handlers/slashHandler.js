@@ -6,7 +6,7 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
 export async function loadSlash (client) {
-  const slashCommands = join(__dirname, '..', 'slashCommands')
+  const slashCommands = join(__dirname, '..', 'events', 'slashCommands')
   await scanDirectoryForCommands(slashCommands, client)
 }
 
