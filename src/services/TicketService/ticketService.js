@@ -6,7 +6,7 @@ import { fileURLToPath } from 'url'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-class TicketService {
+export class TicketService {
   constructor (client) {
     this.client = client
     this.ticketsFilePath = path.join(__dirname, '../../data/tickets.json')
@@ -28,13 +28,13 @@ class TicketService {
       if (fs.existsSync(this.ticketsFilePath)) {
         const data = fs.readFileSync(this.ticketsFilePath, 'utf8')
         this.ticketsData = JSON.parse(data)
-        console.log('Datos de tickets cargados correctamente')
+        console.log('- - Datos de tickets cargados correctamente')
       } else {
-        console.log('No se encontró archivo de tickets, se iniciará uno nuevo')
+        console.log('- - No se encontró archivo de tickets, se iniciará uno nuevo')
         this.saveTickets()
       }
     } catch (error) {
-      console.error('Error al cargar los datos de tickets:', error)
+      console.error('- -Error al cargar los datos de tickets:', error)
       this.ticketsData = {}
       this.saveTickets()
     }
@@ -45,7 +45,7 @@ class TicketService {
     try {
       fs.writeFileSync(this.ticketsFilePath, JSON.stringify(this.ticketsData, null, 2))
     } catch (error) {
-      console.error('Error al guardar los datos de tickets:', error)
+      console.error('- -Error al guardar los datos de tickets:', error)
     }
   }
 

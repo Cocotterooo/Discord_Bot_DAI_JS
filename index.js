@@ -10,9 +10,8 @@ import {
 import { discordConfig, instagramConfig } from './config.js'
 import 'colors' // Permite colorear la consola (depende de la librería 'colors')
 
-import fs from 'fs'
-import path from 'path'
-import { fileURLToPath } from 'url'
+// 📌 Importar funciones de carga de servicio
+import { TicketService } from './src/services/TicketService/ticketService.js'
 
 // 📌 Importar el cliente de Instagram
 import { InstagramAPIClient } from './src/services/InstagramAPIClient/instagram.js'
@@ -24,9 +23,6 @@ import { stateError } from './src/utilities/stateError.js'
 import { loadSlash } from './src/handlers/slashHandler.js'
 // import { loadEvents } from './src/events/handlers/eventHandler.js'
 import { loadButtons } from './src/handlers/buttonHandler.js'
-
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
 
 // 📌 Cargar las variables de entorno
 process.loadEnvFile()
@@ -118,36 +114,17 @@ client.services = {};
   }
 })()
 
-// MARK:📌 Cargar servicios
-async function loadServices () {
-  const servicesPath = path.join(__dirname, 'src', 'services')
+// MARK: Sorteo
+// 📌 Cargar servicio
+// Inicializar el servicio de tickets
+export const ticketService = new TicketService(client)
 
-  try {
-  // Verifica si el directorio de servicios existe
-    if (fs.existsSync(servicesPath)) {
-      const servicesFolders = fs.readdirSync(servicesPath)
-
-      for (const folder of servicesFolders) {
-        const folderPath = path.join(servicesPath, folder)
-
-        if (fs.statSync(folderPath).isDirectory()) {
-          const servicePath = path.join(folderPath, `${folder.toLowerCase()}.js`)
-
-          if (fs.existsSync(servicePath)) {
-            const serviceModule = await import(`file://${servicePath}`)
-            const service = serviceModule.default(client)
-
-            // Registrar el servicio con su nombre normalizado
-            const serviceName = folder.charAt(0).toLowerCase() + folder.slice(1)
-            client.services[serviceName] = service
-            console.log(`Servicio cargado: ${serviceName}`)
-          }
-        }
-      }
-    }
-  } catch (error) {
-    console.error('Error al cargar servicios:', error)
-  }
+// Verificar si el servicio se inicializó correctamente
+if (ticketService) {
+  console.log('✅ Servicio de tickets cargado correctamente'.green)
+} else {
+  console.error('❌ Error al cargar el servicio de tickets'.red)
+  stateError(client) // Registrar error
 }
 
 // MARK: On ready
@@ -184,14 +161,6 @@ client.on('ready', async () => {
     console.error('❌ Error al iniciar handlerButtons'.red, error)
     stateError(client)
   }
-
-  // 📌 Cargar servicio
-  await loadServices()
-    .then(() => console.log('✅ Servicios cargados correctamente'.green))
-    .catch((error) => {
-      console.error(`❌ Error al cargar los servicios: ${error}`.red)
-      stateError(client)
-    })
 
   // 📌 Cargar eventos
   /* await loadEvents(client)(

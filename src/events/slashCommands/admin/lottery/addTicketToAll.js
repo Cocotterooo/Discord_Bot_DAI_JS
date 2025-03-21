@@ -1,5 +1,6 @@
 // src/slashCommands/admin/addTicketToAllCommand.js
 import { SlashCommandBuilder } from 'discord.js'
+import { ticketService } from '../../../../index.js'
 
 export const data = new SlashCommandBuilder()
   .setName('agregar_ticket_a_todos')
@@ -14,7 +15,7 @@ export const data = new SlashCommandBuilder()
   )
 
 export async function execute (interaction, client) {
-  const ticketService = client.services.ticketService
+  // const ticketService = client.services.ticketService
   const cantidad = interaction.options.getInteger('cantidad')
 
   // Verificar permisos (ya está cubierto por setDefaultMemberPermissions, pero por si acaso)
