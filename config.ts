@@ -2,14 +2,17 @@
 /****************************************************************
  * CONFIGURACIÓN DE DISCORD:
  ****************************************************************/
+import { User } from 'discord.js'
+
 export const discordConfig = {
   PREFIX: '*',
   activities: {
     PREPARANDO_SAN_PEPE: '🤑Preparando 𝗦𝗔𝗡 𝗣𝗘𝗣𝗘',
-    EN_SAN_PEPE: '¡HOY ES SAN PEPE!',
-    MOD: 'Moderando'
+    EN_SAN_PEPE: '¡EN SAN PEPE!',
+    MOD: 'Moderando...',
+    state: 'Moderando...',
   },
-  color: '#00ace2',
+  COLOR: 0x0099ff,
   ownerId: '789591730907381760',
   defaultEmbed: {
     FOOTER_SEPARATOR: 'https://i.imgur.com/8GkOfv1.png',
@@ -90,19 +93,19 @@ export const verificationAndSupportEmbed = {
                   > Procesaremos tu verificación a la mayor brevedad posible.`,
     color: discordConfig.COLOR,
     footer: {
-      text: discordConfig.DAI_SIGN,
-      iconURL: discordConfig.EMBED_FOOTER_SEPARATOR
+      text: discordConfig.defaultEmbed.DAI_SIGN,
+      iconURL: discordConfig.defaultEmbed.FOOTER_SEPARATOR
     }
   },
   supportTicket: {
-    description: function (user) {
-      return `## <:info:1288631394502709268> ¡Bienvenido al Soporte ${user.mention}!
+    description: function (user: User) {
+      return `## <:info:1288631394502709268> ¡Bienvenido al Soporte <@${user.id}>!
         ### Te atenderá un miembro de la DAI lo antes posible.
         Por favor, cuéntanos tu problema o duda para que podamos ayudarte.`
     },
     verificationTicket: {
-      description: function (user) {
-        return `## <:verificado:1288628715982553188> ¡Hola ${user.mention}!
+      description: function (user: User) {
+        return `## <:verificado:1288628715982553188> ¡Hola <@${user.id}>!
         ### ¡Para que podamos verificarte necesitamos pruebas!
         Por favor, envíanos tu **matrícula** o una captura de pantalla de **Moovi** que confirme que eres estudiante en la **EEI**.`
       }
