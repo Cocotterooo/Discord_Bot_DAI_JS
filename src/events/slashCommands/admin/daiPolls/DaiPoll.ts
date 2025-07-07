@@ -1,5 +1,5 @@
-import { EmbedBuilder, TextChannel, MessageComponentInteraction, Client, User, GuildMember, DMChannel } from 'discord.js';
-import { discordConfig } from '../../../../../config.ts';
+import { EmbedBuilder, TextChannel, MessageComponentInteraction, Client, User, GuildMember } from 'discord.js';
+import { discordConfig } from '../../../../../config';
 
 interface Option {
   name: string;

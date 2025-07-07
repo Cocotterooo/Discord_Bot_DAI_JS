@@ -61,10 +61,10 @@ export default {
             await interaction.reply({ content: `<:si:1288631406452412428> Comenzado el registro de asistentes en **${voiceChannel.name}**. Usa el comando de nuevo para finalizar.` });
 
             // Escuchar cambios de voz para ese canal
-            const voiceStateUpdateHandler = (oldState: VoiceState, newState: VoiceState) => {
+            const voiceStateUpdateHandler = (_oldState: VoiceState, newState: VoiceState) => {
                 if (!tracking || !trackedChannelId) return;
 
-                const oldChannelId = oldState.channelId;
+                // const oldChannelId = oldState.channelId;
                 const newChannelId = newState.channelId;
 
                 // Si alguien se une al canal que estamos siguiendo

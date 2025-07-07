@@ -3,7 +3,7 @@ import { join, dirname } from 'path'
 import { fileURLToPath, pathToFileURL } from 'url'
 import { Client } from 'discord.js' // Importamos el tipo Client de discord.js
 
-const __filename = fileURLToPath(import.meta.url)
+const __filename = fileURLToPath(new URL(import.meta.url))
 const __dirname = dirname(__filename)
 
 // Definimos que el client debe tener un slashCommands: Map<string, any>

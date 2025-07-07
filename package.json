@@ -3,7 +3,12 @@
   "version": "1.0.0",
   "description": "Bot de la comunidad de discord de la Escuela de Industriales de la UVigo, encargado de la gestión de usuarios, actividades, canales, votaciones, etc.",
   "main": "dist/index.js",
-  "type": "module",
+  "scripts": {
+    "start": "node dist/index.js",
+    "build": "tsc",
+    "dev": "ts-node-dev --respawn --transpile-only index.ts",
+    "lint": "eslint 'src/**/*.{ts,js}' --fix"
+  },
   "dependencies": {
     "colors": "^1.4.0",
     "discord-api-types": "0.37.119",
@@ -51,30 +56,5 @@
       "no-unused-vars": "off",
       "@typescript-eslint/no-unused-vars": 2
     }
-  },
-  "scripts": {
-    "start": "ts-node index.ts",
-    "build": "tsc",
-    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
-    "lint": "eslint 'src/**/*.{ts,js}' --fix"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Cocotterooo/Discord_Bot_DAI_JS.git"
-  },
-  "keywords": [
-    "dai",
-    "eei",
-    "uvigo",
-    "cocoterooo",
-    "m_medina33",
-    "nodejs",
-    "node"
-  ],
-  "author": "Manuel Medina Rodríguez",
-  "license": "Apache-2.0",
-  "bugs": {
-    "url": "https://github.com/Cocotterooo/Discord_Bot_DAI_JS/issues"
-  },
-  "homepage": "https://github.com/Cocotterooo/Discord_Bot_DAI_JS#readme"
+  }
 }

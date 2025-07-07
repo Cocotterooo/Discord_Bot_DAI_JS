@@ -3,7 +3,7 @@ import { join, dirname } from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
 import { Client, ButtonInteraction } from 'discord.js';
 
-const __filename = fileURLToPath(import.meta.url);
+const __filename = fileURLToPath(new URL(import.meta.url));
 const __dirname = dirname(__filename);
 
 // Tipamos la estructura que cada botón debe tener

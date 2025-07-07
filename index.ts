@@ -8,31 +8,27 @@ import {
 } from 'discord.js';
 import { REST } from '@discordjs/rest';
 import { Routes } from 'discord-api-types/v9';
-import { discordConfig, instagramConfig } from './config.ts';
+import { discordConfig } from './config';
 import 'colors';
 
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-// 📌 Importar el cliente de Instagram
-import { InstagramAPIClient } from './src/services/InstagramAPIClient/instagram.ts';
-
 // 📌 Importar funciones de manejo de errores
-import { stateError } from './src/utilities/stateError.ts';
+import { stateError } from './src/utilities/stateError';
 
 // 📌 Importar handlers para Slash Commands, eventos y botones
-import { loadSlash } from './src/handlers/slashHandler.ts';
-import { loadButtons } from './src/handlers/buttonHandler.ts';
+import { loadSlash } from './src/handlers/slashHandler';
+import { loadButtons } from './src/handlers/buttonHandler';
 
 // 📌 Variables necesarias para rutas
-const __filename = fileURLToPath(import.meta.url);
+const __filename = fileURLToPath(new URL(import.meta.url));
 const __dirname = path.dirname(__filename);
 
 // 📌 Cargar variables de entorno
 process.loadEnvFile?.();
 const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN as string;
-const INSTAGRAM_API_KEY = process.env.INSTAGRAM_API_KEY as string;
 
 // 📌 Interfaces personalizadas
 interface ExtendedClient extends Client {
