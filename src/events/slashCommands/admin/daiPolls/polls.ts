@@ -13,7 +13,7 @@ import {
   ModalSubmitInteraction,
   MessageFlags
 } from 'discord.js';
-import { DaiPoll } from './DaiPoll';
+import { DaiPoll } from './DaiPoll.js';
 
 // Tipos
 type ActivePollsMap = Map<string, DaiPoll>;

@@ -8,7 +8,7 @@ import {
 } from 'discord.js';
 import { REST } from '@discordjs/rest';
 import { Routes } from 'discord-api-types/v9';
-import { discordConfig } from './config';
+import { discordConfig } from './config.js';
 import 'colors';
 
 import fs from 'fs';
@@ -16,11 +16,11 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 // 📌 Importar funciones de manejo de errores
-import { stateError } from './src/utilities/stateError';
+import { stateError } from './src/utilities/stateError.js';
 
 // 📌 Importar handlers para Slash Commands, eventos y botones
-import { loadSlash } from './src/handlers/slashHandler';
-import { loadButtons } from './src/handlers/buttonHandler';
+import { loadSlash } from './src/handlers/slashHandler.js';
+import { loadButtons } from './src/handlers/buttonHandler.js';
 
 // 📌 Variables necesarias para rutas
 const __filename = fileURLToPath(new URL(import.meta.url));

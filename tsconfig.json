@@ -29,7 +29,7 @@
     // "moduleDetection": "auto",                    /* Controla qué método se usa para detectar archivos JS en formato de módulo. */
 
     /* Módulos */
-    "module": "esnext",                             /* Especifica qué código de módulo se genera. */
+    "module": "es2022",                             /* Especifica qué código de módulo se genera. */
     // "rootDir": "./",                              /* Especifica la carpeta raíz dentro de tus archivos fuente. */
     "moduleResolution": "node",                     /* Especifica cómo TypeScript busca un archivo a partir de un especificador de módulo dado. Es recomendable usar "node" o "node16"/"nodenext" para que los "paths" funcionen correctamente en la mayoría de los escenarios. */
     // "baseUrl": "./",                              /* Especifica el directorio base para resolver nombres de módulos no relativos. (Ya configurado arriba) */

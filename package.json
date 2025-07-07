@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Bot de la comunidad de discord de la Escuela de Industriales de la UVigo, encargado de la gestión de usuarios, actividades, canales, votaciones, etc.",
   "main": "dist/index.js",
+  "type": "module",
   "scripts": {
     "start": "node dist/index.js",
     "build": "tsc",
