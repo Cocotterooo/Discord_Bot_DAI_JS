@@ -1,3 +1,11 @@
+/**
+ * Discord Bot DAI - Bot oficial de la Delegación de Alumnos de Industriales
+ * Universidad de Vigo
+ * 
+ * Este bot gestiona usuarios, actividades, canales, votaciones y más
+ * para la comunidad de discord de la Escuela de Industriales de la UVigo.
+ */
+
 import {
   Client,
   GatewayIntentBits,
@@ -15,22 +23,24 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-// 📌 Importar funciones de manejo de errores
+// Importar funciones utilitarias
 import { stateError } from './src/utilities/stateError.js';
 
-// 📌 Importar handlers para Slash Commands, eventos y botones
+// Importar handlers para la gestión de comandos y eventos
 import { loadSlash } from './src/handlers/slashHandler.js';
 import { loadButtons } from './src/handlers/buttonHandler.js';
 
-// 📌 Variables necesarias para rutas
+// Variables para el manejo de rutas (ES modules)
 const __filename = fileURLToPath(new URL(import.meta.url));
 const __dirname = path.dirname(__filename);
 
-// 📌 Cargar variables de entorno
+// Cargar variables de entorno
 process.loadEnvFile?.();
 const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN as string;
 
-// 📌 Interfaces personalizadas
+/**
+ * Interfaz que extiende el Client de Discord con propiedades personalizadas
+ */
 interface ExtendedClient extends Client {
   color: string;
   commands: Collection<string, any>;

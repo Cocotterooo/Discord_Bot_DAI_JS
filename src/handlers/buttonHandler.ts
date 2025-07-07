@@ -1,77 +1,127 @@
-import { readdir } from 'fs/promises';
+import { readdir, access } from 'fs/promises';
 import { join, dirname } from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
 import { Client, ButtonInteraction } from 'discord.js';
+import { constants } from 'fs';
 
+// Variables para el manejo de rutas
 const __filename = fileURLToPath(new URL(import.meta.url));
 const __dirname = dirname(__filename);
 
-// Tipamos la estructura que cada botón debe tener
+/**
+ * Estructura que debe tener cada botón
+ */
 interface Button {
   id: string;
   execute: (interaction: ButtonInteraction, client: Client) => Promise<void>;
 }
 
-// Extendemos el Client para incluir botones y un flag de inicialización
+/**
+ * Extensión del Client para incluir la gestión de botones
+ */
 interface ExtendedClient extends Client {
   buttons: Map<string, Button>;
   buttonHandlerInitialized?: boolean;
 }
 
+/**
+ * Carga todos los botones desde el directorio de eventos
+ * @param client Cliente extendido de Discord
+ */
 export async function loadButtons(client: ExtendedClient): Promise<void> {
   const buttonsPath = join(__dirname, '..', 'events', 'buttons');
-  const folders = await readdir(buttonsPath);
+  
+  try {
+    // Verificar si el directorio existe
+    await access(buttonsPath, constants.F_OK);
+    
+    const folders = await readdir(buttonsPath);
+    client.buttons = client.buttons || new Map<string, Button>();
 
-  client.buttons = client.buttons || new Map<string, Button>();
+    console.log(`🔘 Cargando botones desde: ${buttonsPath}`);
 
-  for (const folder of folders) {
-    const buttonFiles = await readdir(join(buttonsPath, folder));
-
-    for (const file of buttonFiles) {
+    for (const folder of folders) {
+      const folderPath = join(buttonsPath, folder);
+      
       try {
-        const buttonPath = pathToFileURL(join(buttonsPath, folder, file)).href;
-        const buttonModule = await import(buttonPath);
-        const button: Button = buttonModule.default;
-
-        if (!button || !button.id) {
-          console.warn(`⚠️ El archivo ${file} no tiene una propiedad 'id'. Se omitirá.`);
-          continue;
+        const buttonFiles = await readdir(folderPath);
+        
+        for (const file of buttonFiles) {
+          await loadButtonFile(folderPath, file, client);
         }
-
-        client.buttons.set(button.id, button);
-        console.log(`🔘 Botón cargado: ${folder}/${button.id}`);
-      } catch (error: any) {
-        console.error(`❌ Error al cargar el botón ${file}:`, error.message);
+      } catch (error) {
+        console.warn(`⚠️ Error leyendo directorio de botones '${folder}':`, error);
       }
     }
+
+    console.log(`✅ Cargados ${client.buttons.size} botones`);
+    
+    // Inicializar el handler de eventos si no está ya inicializado
+    if (!client.buttonHandlerInitialized) {
+      initializeButtonHandler(client);
+    }
+  } catch (error) {
+    console.warn('⚠️ Directorio de botones no encontrado, saltando carga de botones');
   }
+}
 
-  if (!client.buttonHandlerInitialized) {
-    client.on('interactionCreate', async (interaction) => {
-      if (!interaction.isButton()) return;
+/**
+ * Carga un archivo de botón específico
+ * @param folderPath Ruta del directorio
+ * @param file Nombre del archivo
+ * @param client Cliente extendido
+ */
+async function loadButtonFile(folderPath: string, file: string, client: ExtendedClient): Promise<void> {
+  if (!file.endsWith('.js')) return;
 
-      const button = client.buttons.get(interaction.customId);
-      if (!button) return;
+  try {
+    const filePath = join(folderPath, file);
+    const fileURL = pathToFileURL(filePath).href;
+    
+    // Importar el módulo del botón
+    const buttonModule = await import(fileURL);
+    const button = buttonModule.default || buttonModule;
 
-      try {
-        await button.execute(interaction, client);
-      } catch (error: any) {
-        console.error(`❌ Error al ejecutar el botón ${interaction.customId}:`, error.message);
-        if (interaction.replied || interaction.deferred) {
-          await interaction.followUp({
-            content: 'Hubo un error al ejecutar este botón.',
-            ephemeral: true,
-          });
-        } else {
-          await interaction.reply({
-            content: 'Hubo un error al ejecutar este botón.',
-            ephemeral: true,
-          });
-        }
+    // Validar estructura del botón
+    if (!button || !button.id || typeof button.execute !== 'function') {
+      console.warn(`⚠️ Botón inválido en ${file}: falta 'id' o 'execute'`);
+      return;
+    }
+
+    // Registrar el botón
+    client.buttons.set(button.id, button);
+    console.log(`� Botón cargado: ${button.id}`);
+  } catch (error) {
+    console.error(`❌ Error cargando botón ${file}:`, error);
+  }
+}
+
+/**
+ * Inicializa el handler de eventos para botones
+ * @param client Cliente extendido
+ */
+function initializeButtonHandler(client: ExtendedClient): void {
+  client.on('interactionCreate', async (interaction) => {
+    if (!interaction.isButton()) return;
+
+    const button = client.buttons.get(interaction.customId);
+    if (!button) return;
+
+    try {
+      await button.execute(interaction, client);
+    } catch (error) {
+      console.error(`❌ Error ejecutando botón ${interaction.customId}:`, error);
+      
+      const errorMessage = 'Hubo un error al ejecutar este botón.';
+      
+      if (interaction.replied || interaction.deferred) {
+        await interaction.followUp({ content: errorMessage, ephemeral: true });
+      } else {
+        await interaction.reply({ content: errorMessage, ephemeral: true });
       }
-    });
+    }
+  });
 
-    client.buttonHandlerInitialized = true;
-    console.log('🔄 Handler de botones inicializado correctamente');
-  }
+  client.buttonHandlerInitialized = true;
+  console.log('🔄 Handler de botones inicializado correctamente');
 }
