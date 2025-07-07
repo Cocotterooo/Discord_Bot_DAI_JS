@@ -89,7 +89,7 @@
 
     /* Verificación de tipos */
     "strict": true,                                 /* Habilita todas las opciones estrictas de verificación de tipos. */
-    // "noImplicitAny": true,                        /* Habilita el informe de errores para expresiones y declaraciones con un tipo 'any' implícito. */
+    "noImplicitAny": false,                        /* Habilita el informe de errores para expresiones y declaraciones con un tipo 'any' implícito. */
     // "strictNullChecks": true,                     /* Al verificar tipos, ten en cuenta 'null' y 'undefined'. */
     // "strictFunctionTypes": true,                  /* Al asignar funciones, verifica que los parámetros y los valores de retorno sean subtipos compatibles. */
     // "strictBindCallApply": true,                  /* Verifica que los argumentos para los métodos 'bind', 'call' y 'apply' coincidan con la función original. */
