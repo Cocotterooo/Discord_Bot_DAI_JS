@@ -1,7 +1,7 @@
-/**
+/** MARK: DISCORD BOT EEI
  * Discord Bot DAI - Bot oficial de la Delegación de Alumnos de Industriales
  * Universidad de Vigo
- * 
+ *
  * Este bot gestiona usuarios, actividades, canales, votaciones y más
  * para la comunidad de discord de la Escuela de Industriales de la UVigo.
  */
@@ -13,6 +13,7 @@ import {
   Partials,
   Collection,
   ActivityType,
+  MessageFlags
 } from 'discord.js';
 import { REST } from '@discordjs/rest';
 import { Routes } from 'discord-api-types/v9';
@@ -29,6 +30,7 @@ import { stateError } from './src/utilities/stateError.js';
 // Importar handlers para la gestión de comandos y eventos
 import { loadSlash } from './src/handlers/slashHandler.js';
 import { loadButtons } from './src/handlers/buttonHandler.js';
+import { loadEvents } from './src/handlers/eventHandler.js';
 
 // Variables para el manejo de rutas (ES modules)
 const __filename = fileURLToPath(new URL(import.meta.url));
@@ -36,22 +38,11 @@ const __dirname = path.dirname(__filename);
 
 // Cargar variables de entorno
 process.loadEnvFile?.();
-const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN as string;
+const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
 
-/**
- * Interfaz que extiende el Client de Discord con propiedades personalizadas
- */
-interface ExtendedClient extends Client {
-  color: string;
-  commands: Collection<string, any>;
-  slashCommands: Collection<string, any>;
-  buttons: Collection<string, any>;
-  services: Record<string, any>;
-}
-
-// 📌 Crear el cliente de Discord
+// MARK: 📌 Crear el cliente de Discord
 const client = new Client({
-  intents: Object.values(GatewayIntentBits) as GatewayIntentBits[],
+  intents: Object.values(GatewayIntentBits),
   partials: [
     Partials.User,
     Partials.Message,
@@ -72,54 +63,97 @@ const client = new Client({
     parse: ['users', 'roles', 'everyone'],
     repliedUser: true,
   },
-}) as ExtendedClient;
+});
 
-// 📌 Inicializar propiedades personalizadas
+// MARK: 📌 Inicializar propiedades personalizadas
 client.color = '#00ace2';
 client.commands = new Collection();
 client.slashCommands = new Collection();
 client.buttons = new Collection();
 client.services = {};
 
-// 📌 Manejo de interacciones
+// MARK: 📌 Manejo de interacciones
 client.on('interactionCreate', async (interaction) => {
-  if (!interaction.isChatInputCommand()) return;
+  // Manejar comandos slash
+  if (interaction.isChatInputCommand()) {
+    const command = client.slashCommands.get(interaction.commandName);
+    if (!command) return;
 
-  const command = client.slashCommands.get(interaction.commandName);
-  if (!command) return;
-
-  const args: string[] = [];
-  for (const option of interaction.options.data) {
-    if (option.type === 1) { // Subcomandos
-      if (option.name) args.push(option.name);
-      option.options?.forEach(subOption => {
-        if (subOption.value) args.push(String(subOption.value));
-      });
-    } else if (option.value) {
-      args.push(String(option.value));
+    const args = [];
+    for (const option of interaction.options.data) {
+      if (option.type === 1) { // Subcomandos
+        if (option.name) args.push(option.name);
+        option.options?.forEach(subOption => {
+          if (subOption.value) args.push(String(subOption.value));
+        });
+      } else if (option.value) {
+        args.push(String(option.value));
+      }
     }
+
+    try {
+      await command.execute(interaction, client, args);
+    } catch (error) {
+      console.error(error);
+      if (interaction.replied || interaction.deferred) {
+        await interaction.followUp({
+          content: '<:no:1288631410558767156> Hubo un error al ejecutar el comando',
+          flags: MessageFlags.Ephemeral,
+        });
+      } else {
+        await interaction.reply({
+          content: '<:no:1288631410558767156> Hubo un error al ejecutar el comando',
+          flags: MessageFlags.Ephemeral,
+        });
+      }
+    }
+    return;
   }
 
-  try {
-    await command.execute(interaction, client, args);
-  } catch (error) {
-    console.error(error);
-    if (interaction.replied || interaction.deferred) {
-      await interaction.followUp({
-        content: '<:no:1288631410558767156> Hubo un error al ejecutar el comando',
-        ephemeral: true,
-      });
-    } else {
-      await interaction.reply({
-        content: '<:no:1288631410558767156> Hubo un error al ejecutar el comando',
-        ephemeral: true,
-        allowedMentions: { parse: ['users', 'roles', 'everyone'] },
-      });
+  // Manejar interacciones de componentes (botones, menús de selección, etc.)
+  if (interaction.isButton() || interaction.isStringSelectMenu() || interaction.isUserSelectMenu()) {
+    // Determinar qué comando maneja esta interacción basándose en el customId
+    let commandName = null;
+
+    // Mapear customIds a comandos que los manejan
+    if (interaction.customId.startsWith('ins_ceeibis')) {
+      commandName = 'ins_ceeibis';
+    } else if (interaction.customId.startsWith('ins_vortex')) {
+      commandName = 'ins_vortex';
+    } else if (interaction.customId.startsWith('ins_spacelab')) {
+      commandName = 'ins_spacelab';
+    } else if (interaction.customId.startsWith('ins_motorsport')) {
+      commandName = 'ins_motorsport';
+    } else if (interaction.customId.startsWith('ins_ces')) {
+      commandName = 'ins_ces';
+    }
+
+    if (commandName) {
+      const command = client.slashCommands.get(commandName);
+      if (command && typeof command.handleComponentInteraction === 'function') {
+        try {
+          await command.handleComponentInteraction(interaction, client);
+        } catch (error) {
+          console.error(`Error manejando componente de ${commandName}:`, error);
+
+          if (interaction.replied || interaction.deferred) {
+            await interaction.followUp({
+              content: '<:no:1288631418158080000> Hubo un error al procesar la interacción.',
+              flags: MessageFlags.Ephemeral
+            });
+          } else {
+            await interaction.reply({
+              content: '<:no:1288631418158080000> Hubo un error al procesar la interacción.',
+              flags: MessageFlags.Ephemeral
+            });
+          }
+        }
+      }
     }
   }
 });
 
-// 📌 Iniciar el bot
+// MARK: 📌 Iniciar el bot
 (async () => {
   try {
     await client.login(DISCORD_BOT_TOKEN);
@@ -130,7 +164,7 @@ client.on('interactionCreate', async (interaction) => {
   }
 })();
 
-// 📌 Cargar servicios
+// MARK: 📌 Cargar servicios
 async function loadServices() {
   const servicesPath = path.join(__dirname, 'src', 'services');
 
@@ -160,13 +194,17 @@ async function loadServices() {
   }
 }
 
-
-// Inicializar REST
+// MARK: Inicializar REST
 const rest = new REST({ version: '9' }).setToken(DISCORD_BOT_TOKEN);
 
 // 📌 Evento 'ready'
 client.on('ready', async () => {
   try {
+    // Cargar eventos primero
+    console.log('🔄 Cargando eventos...'.blue);
+    await loadEvents(client);
+    console.log('✅ Eventos cargados correctamente'.green);
+
     await loadSlash(client);
     console.log('✅ Comandos cargados correctamente'.green);
     console.log(`📜 (/) Comandos cargados: ${client.slashCommands.size}`.blue);
@@ -178,7 +216,7 @@ client.on('ready', async () => {
     console.log('🔄 Registrando comandos en Discord...'.blue);
     const commands = client.slashCommands.map(cmd => cmd.data);
     // Registrar los comandos globalmente en Discord
-    await rest.put(Routes.applicationCommands(client.user?.id!), { body: commands });
+    await rest.put(Routes.applicationCommands(client.user?.id), { body: commands });
     console.log(`✅ Se han registrado ${client.slashCommands.size} comandos globalmente.`.green);
 
     console.log('🔄 Registrando botones'.cyan);

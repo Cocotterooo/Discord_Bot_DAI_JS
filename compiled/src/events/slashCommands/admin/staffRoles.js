@@ -53,7 +53,7 @@ export default {
                 // Responder al clic del botón de forma efímera
                 yield buttonInteraction.reply({
                     content: '¡Pong Secreto! 😉',
-                    ephemeral: true // 🔹 Solo el usuario que hizo clic verá este mensaje
+                    flags: MessageFlags.Ephemeral // 🔹 Solo el usuario que hizo clic verá este mensaje
                     // No es necesario 'flags: MessageFlags.Ephemeral'
                 });
                 // Opcionalmente, puedes detener el collector después del primer clic válido si solo quieres una respuesta

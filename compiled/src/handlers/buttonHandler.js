@@ -51,13 +51,13 @@ export function loadButtons(client) {
                     if (interaction.replied || interaction.deferred) {
                         yield interaction.followUp({
                             content: 'Hubo un error al ejecutar este botón.',
-                            ephemeral: true,
+                            flags: MessageFlags.Ephemeral,
                         });
                     }
                     else {
                         yield interaction.reply({
                             content: 'Hubo un error al ejecutar este botón.',
-                            ephemeral: true,
+                            flags: MessageFlags.Ephemeral,
                         });
                     }
                 }

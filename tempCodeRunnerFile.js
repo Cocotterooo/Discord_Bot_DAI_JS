@@ -88,12 +88,12 @@ client.on('interactionCreate', async (interaction) => {
       if (interaction.replied || interaction.deferred) {
         await interaction.followUp({
           content: '<:no:1288631410558767156> Hubo un error al ejecutar el comando',
-          ephemeral: true
+          flags: 
         })
       } else {
         await interaction.reply({
           content: '<:no:1288631410558767156> Hubo un error al ejecutar el comando',
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
           allowed_mentions: { parse: ['users', 'roles', 'everyone'] } // No incluyas 'here'
         })
       }

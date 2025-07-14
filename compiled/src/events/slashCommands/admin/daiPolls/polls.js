@@ -135,7 +135,7 @@ export default {
                     if (processingVotes.has(buttonInteraction.user.id)) {
                         yield buttonInteraction.reply({
                             content: '⏳ Por favor espera, tu voto anterior está siendo procesado.',
-                            ephemeral: true
+                            flags: MessageFlags.Ephemeral
                         });
                         return;
                     }
@@ -153,7 +153,7 @@ export default {
                         console.error('Error al procesar el voto:', error);
                         yield buttonInteraction.followUp({
                             content: '<:no:1288631410558767156> Hubo un error al procesar tu voto.',
-                            ephemeral: true
+                            flags: MessageFlags.Ephemeral
                         });
                     }
                     finally {

@@ -1,13 +1,13 @@
-import { Client, PresenceUpdateStatus } from 'discord.js';
+import { PresenceUpdateStatus } from 'discord.js';
 
 /**
  * Cambia el estado del bot.
  *
- * @param {object} client - El primer número.
+ * @param {object} client - El cliente de Discord.
  * @param {string} type - 'error', 'warning' o 'success'.
  * @returns {None}
  */
-export async function stateError(client: Client, type: 'error' | 'warning' | 'success' = 'error'): Promise<void> {
+export async function stateError(client, type = 'error') {
   try {
     if (type === 'error') {
       await client.user?.setPresence({ status: PresenceUpdateStatus.DoNotDisturb });
@@ -21,7 +21,7 @@ export async function stateError(client: Client, type: 'error' | 'warning' | 'su
     } else {
       console.error('❌ Tipo de estado no válido.');
     }
-  } catch (presenceError: any) {
+  } catch (presenceError) {
     console.error('❌ Error al actualizar el estado del bot:', presenceError.message);
   }
 }

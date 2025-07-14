@@ -7,20 +7,12 @@ import {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
-  Client,
-  Message,
-  MessageComponentInteraction,
-  ModalSubmitInteraction,
   MessageFlags
 } from 'discord.js';
 import { DaiPoll } from './DaiPoll.js';
 
-// Tipos
-type ActivePollsMap = Map<string, DaiPoll>;
-type ProcessingVotesMap = Map<string, boolean>;
-
 // Variables Globales
-const activePolls: ActivePollsMap = new Map(); // Mapa para almacenar las votaciones activas
+const activePolls = new Map(); // Mapa para almacenar las votaciones activas
 
 export default {
   data: new SlashCommandBuilder()
@@ -28,7 +20,7 @@ export default {
     .setDescription('Crea una votación de tiempo limitado.'),
 
   // Execute
-  async execute(interaction: any, client: Client): Promise<void> {
+  async execute(interaction, client) {
     if (!interaction.isCommand()) return;
 
     // MARK: Crear el Modal
@@ -70,10 +62,10 @@ export default {
       .setRequired(false);
 
     // Filas del Modal
-    const titlePollRow = new ActionRowBuilder<TextInputBuilder>().addComponents(titlePollInput);
-    const durationPollInputRow = new ActionRowBuilder<TextInputBuilder>().addComponents(durationPollInput);
-    const secretPollInputRow = new ActionRowBuilder<TextInputBuilder>().addComponents(secretPollInput);
-    const optionsInputRow = new ActionRowBuilder<TextInputBuilder>().addComponents(optionsInput);
+    const titlePollRow = new ActionRowBuilder().addComponents(titlePollInput);
+    const durationPollInputRow = new ActionRowBuilder().addComponents(durationPollInput);
+    const secretPollInputRow = new ActionRowBuilder().addComponents(secretPollInput);
+    const optionsInputRow = new ActionRowBuilder().addComponents(optionsInput);
 
     modal.addComponents(titlePollRow, durationPollInputRow, secretPollInputRow, optionsInputRow);
 
@@ -87,9 +79,9 @@ export default {
 
     // MARK: Respuesta del Modal
     try {
-      const modalSubmit: ModalSubmitInteraction = await interaction.awaitModalSubmit({
+      const modalSubmit = await interaction.awaitModalSubmit({
         time: 300000, // 5 minutos
-        filter: (i: any) => i.customId === 'votacion_modal' && i.user.id === interaction.user.id
+        filter: (i) => i.customId === 'votacion_modal' && i.user.id === interaction.user.id
       });
 
       // Obtener Valores del Modal
@@ -124,7 +116,7 @@ export default {
       const poll = new DaiPoll(
         titlePollInputValue,
         `${modalSubmit.user}`,
-        modalSubmit.channel! as any,
+        modalSubmit.channel,
         `${optionsInputValue}` === '' ? 'A favor, En contra, Abstención' : optionsInputValue,
         `${secretPollInputValue}` === '' ? 'Y' : secretPollInputValue,
         durationInSeconds
@@ -133,7 +125,7 @@ export default {
       activePolls.set(pollId, poll); // Almacenar la votación en el mapa
 
       // MARK: Crear Botones
-      const createButtons = (disabled = false): ButtonBuilder[] => {
+      const createButtons = (disabled = false) => {
         return poll.options.map((option) => {
           let style = ButtonStyle.Primary; // Por defecto, azul
           if (option === 'A favor') {
@@ -149,28 +141,28 @@ export default {
         });
       };
 
-      const buttonRow = new ActionRowBuilder<ButtonBuilder>().addComponents(createButtons());
+      const buttonRow = new ActionRowBuilder().addComponents(createButtons());
 
       // MARK: Enviar el Embed Inicial
       const initialEmbed = await poll.embedPoll();
-      const message: Message = await modalSubmit.editReply({ embeds: [initialEmbed], components: [buttonRow] });
+      const message = await modalSubmit.editReply({ embeds: [initialEmbed], components: [buttonRow] });
 
       // Variables para Control de Actualizaciones
-      const processingVotes: ProcessingVotesMap = new Map();
+      const processingVotes = new Map();
       let updateIntervalTime = 1000; // Por defecto 1 segundo
-      let updateTimerId: NodeJS.Timeout | null = null;
+      let updateTimerId = null;
 
       // MARK: Crear Collector para Manejar Votos
       const collector = message.createMessageComponentCollector({
-        filter: (i: MessageComponentInteraction) => i.customId.endsWith(`_${pollId}`) && poll.status,
+        filter: (i) => i.customId.endsWith(`_${pollId}`) && poll.status,
         time: durationInSeconds * 1000
       });
 
-      collector.on('collect', async (buttonInteraction: MessageComponentInteraction) => {
+      collector.on('collect', async (buttonInteraction) => {
         if (processingVotes.has(buttonInteraction.user.id)) {
           await buttonInteraction.reply({
-            content: '⏳ Por favor espera, tu voto anterior está siendo procesado.',
-            ephemeral: true
+            content: '⏳ Por favor espera, tu voto está siendo procesado.',
+            flags: MessageFlags.Ephemeral
           });
           return;
         }
@@ -191,7 +183,7 @@ export default {
           console.error('Error al procesar el voto:', error);
           await buttonInteraction.followUp({
             content: '<:no:1288631410558767156> Hubo un error al procesar tu voto.',
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
           });
         } finally {
           processingVotes.delete(buttonInteraction.user.id);
@@ -202,7 +194,7 @@ export default {
       collector.on('end', async () => {
         try {
           poll.status = false;
-          const disabledButtonRow = new ActionRowBuilder<ButtonBuilder>().addComponents(createButtons(true));
+          const disabledButtonRow = new ActionRowBuilder().addComponents(createButtons(true));
           const finalEmbed = await poll.embedPoll();
           await message.edit({ embeds: [finalEmbed], components: [disabledButtonRow] });
 
@@ -218,7 +210,7 @@ export default {
       });
 
       // MARK: Actualizar el Embed Periódicamente con Intervalo Simplificado
-      const updatePoll = async (): Promise<void> => {
+      const updatePoll = async () => {
         if (!poll.status) return;
 
         try {

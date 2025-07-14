@@ -88,13 +88,13 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
         if (interaction.replied || interaction.deferred) {
             yield interaction.followUp({
                 content: '<:no:1288631410558767156> Hubo un error al ejecutar el comando',
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
         }
         else {
             yield interaction.reply({
                 content: '<:no:1288631410558767156> Hubo un error al ejecutar el comando',
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
                 allowedMentions: { parse: ['users', 'roles', 'everyone'] },
             });
         }

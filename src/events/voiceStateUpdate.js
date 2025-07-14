@@ -2,7 +2,7 @@ import { VoiceState } from 'discord.js';
 
 export default {
   name: 'voiceStateUpdate',
-  async execute(oldState: VoiceState, newState: VoiceState) {
+  async execute(oldState, newState) {
     const user = newState.member?.user;
     if (!user) return; // Validación por si no hay usuario
 

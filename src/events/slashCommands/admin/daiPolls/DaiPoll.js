@@ -1,47 +1,20 @@
-import { EmbedBuilder, TextChannel, MessageComponentInteraction, Client, User, GuildMember } from 'discord.js';
+import { EmbedBuilder, MessageFlags } from 'discord.js';
 import { discordConfig } from '../../../../../config.js';
 
-interface Option {
-  name: string;
-  votes: number;
-  users: string[];
-}
-
-interface VoterInfo {
-  id: string;
-  user: User;
-  userName: string;
-  option: string;
-}
-
-interface TotalVotes {
-  totalVotes: number;
-  options: Option[];
-}
-
-export class DaiPoll {
-  title: string;
-  timeStamp: number;
-  secret: boolean;
-  channel: TextChannel;
-  author: string;
-  duration: number;
-  end_time: number;
-  options: string[];
-  totalVotes: TotalVotes;
-  votersInfo: VoterInfo[];
-  status: boolean;
-  barLength: number;
-  remainingTime?: string;
-
-  constructor(
-    title: string,
-    author: string,
-    channel: TextChannel,
-    options: string,
-    secret: string = 'n',
-    duration: number
-  ) {
+/**
+ * Clase DaiPoll para manejar votaciones de Discord
+ */
+class DaiPoll {
+  /**
+   * Constructor de la clase DaiPoll
+   * @param {string} title - Título de la votación
+   * @param {string} author - Autor de la votación
+   * @param {import('discord.js').TextChannel} channel - Canal donde se realiza la votación
+   * @param {string} options - Opciones de la votación separadas por comas
+   * @param {string} secret - Si la votación es secreta ('Y'/'N')
+   * @param {number} duration - Duración de la votación en segundos
+   */
+  constructor(title, author, channel, options, secret = 'n', duration) {
     this.title = title;
     this.timeStamp = Date.now();
     this.secret = secret.toUpperCase() === 'Y';
@@ -61,9 +34,15 @@ export class DaiPoll {
     this.votersInfo = [];
     this.status = true;
     this.barLength = 13;
+    this.remainingTime = undefined;
   }
 
-  async updateRemainingTime(endTime: number): Promise<string | null> {
+  /**
+   * Actualiza el tiempo restante de la votación
+   * @param {number} endTime - Tiempo de finalización
+   * @returns {Promise<string|null>} Tiempo restante formateado o null si ya terminó
+   */
+  async updateRemainingTime(endTime) {
     const now = Date.now();
     const remainingTimeMs = endTime - now;
 
@@ -77,7 +56,11 @@ export class DaiPoll {
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   }
 
-  async embedPoll(): Promise<EmbedBuilder> {
+  /**
+   * Crea el embed de la votación
+   * @returns {Promise<EmbedBuilder>} Embed de Discord con la información de la votación
+   */
+  async embedPoll() {
     const defaultProgressBar = '⬛'.repeat(this.barLength);
 
     if (this.end_time !== undefined) {
@@ -133,7 +116,7 @@ export class DaiPoll {
     }
 
     const listOfVoters = this.votersInfo.map((voter) => voter.userName);
-    let votersValue: string;
+    let votersValue;
 
     if (this.secret || !this.status) {
       votersValue = listOfVoters.length > 0
@@ -152,12 +135,18 @@ export class DaiPoll {
     return embed;
   }
 
-  async newVote(interaction: MessageComponentInteraction, option: string): Promise<void> {
+  /**
+   * Procesa un nuevo voto
+   * @param {import('discord.js').MessageComponentInteraction} interaction - Interacción del botón
+   * @param {string} option - Opción votada
+   * @returns {Promise<void>}
+   */
+  async newVote(interaction, option) {
     if (!interaction.isCommand() && !interaction.isButton()) return;
 
     const userId = interaction.user?.id;
     const user = interaction.user;
-    const member = interaction.member as GuildMember;
+    const member = interaction.member;
     const userName = member?.nickname || user.username;
 
     if (!userId || !user) {
@@ -169,7 +158,7 @@ export class DaiPoll {
     if (hasVoted) {
       await interaction.followUp({
         content: '<:no:1288631410558767156> Ya has votado.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }
@@ -177,7 +166,7 @@ export class DaiPoll {
     if (!this.options.includes(option)) {
       await interaction.followUp({
         content: '<:no:1288631410558767156> Opción no válida.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }
@@ -200,11 +189,15 @@ export class DaiPoll {
 
     await interaction.followUp({
       content: `<:si:1288631406452412428> Has votado: **${option}**`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   }
 
-  toJSON(): string {
+  /**
+   * Convierte la votación a JSON
+   * @returns {string} Representación JSON de la votación
+   */
+  toJSON() {
     return JSON.stringify({
       title: this.title,
       timeStamp: this.timeStamp,
@@ -221,7 +214,11 @@ export class DaiPoll {
     }, null, 2);
   }
 
-  async detailedResultsEmbed(): Promise<EmbedBuilder> {
+  /**
+   * Crea un embed con los resultados detallados
+   * @returns {Promise<EmbedBuilder>} Embed con resultados detallados
+   */
+  async detailedResultsEmbed() {
     const embed = new EmbedBuilder()
       .setTitle('Resultados detallados de la votación')
       .setColor(discordConfig.COLOR || 0x0099ff)
@@ -245,7 +242,13 @@ export class DaiPoll {
     return embed;
   }
 
-  async sendPrivateResults(client: Client, userIds: string[]): Promise<void> {
+  /**
+   * Envía los resultados privados a usuarios específicos
+   * @param {import('discord.js').Client} client - Cliente de Discord
+   * @param {string[]} userIds - Array de IDs de usuarios
+   * @returns {Promise<void>}
+   */
+  async sendPrivateResults(client, userIds) {
     for (const userId of userIds) {
       try {
         const user = await client.users.fetch(userId);
@@ -264,3 +267,5 @@ export class DaiPoll {
     }
   }
 }
+
+export { DaiPoll };

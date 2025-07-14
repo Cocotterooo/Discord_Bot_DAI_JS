@@ -126,14 +126,14 @@ export class DaiPoll {
             if (hasVoted) {
                 yield interaction.followUp({
                     content: '<:no:1288631410558767156> Ya has votado.',
-                    ephemeral: true,
+                    flags: MessageFlags.Ephemeral,
                 });
                 return;
             }
             if (!this.options.includes(option)) {
                 yield interaction.followUp({
                     content: '<:no:1288631410558767156> Opción no válida.',
-                    ephemeral: true,
+                    flags: MessageFlags.Ephemeral,
                 });
                 return;
             }
@@ -152,7 +152,7 @@ export class DaiPoll {
             this.totalVotes.totalVotes += 1;
             yield interaction.followUp({
                 content: `<:si:1288631406452412428> Has votado: **${option}**`,
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
         });
     }
