@@ -1,15 +1,16 @@
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 // Importaciones
-import { SlashCommandBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } from 'discord.js';
-import { DaiPoll } from './DaiPoll.ts';
+import {
+    SlashCommandBuilder,
+    ModalBuilder,
+    TextInputBuilder,
+    TextInputStyle,
+    ActionRowBuilder,
+    ButtonBuilder,
+    ButtonStyle,
+    MessageFlags
+} from 'discord.js';
+import { DaiPoll } from './DaiPoll.js';
+
 // Variables Globales
 const activePolls = new Map(); // Mapa para almacenar las votaciones activas
 export default {
@@ -17,10 +18,10 @@ export default {
         .setName('dai_votacion')
         .setDescription('Crea una votación de tiempo limitado.'),
     // Execute
-    execute(interaction, client) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (!interaction.isCommand())
-                return;
+    async execute(interaction, client) {
+        if (!interaction.isCommand()) {
+            return;
+        }
             // MARK: Crear el Modal
             const modal = new ModalBuilder()
                 .setCustomId('votacion_modal')
@@ -40,6 +41,13 @@ export default {
                 .setPlaceholder('Ingresa la duración de la votación en segundos.')
                 .setStyle(TextInputStyle.Short)
                 .setRequired(true);
+            const typePollInput = new TextInputBuilder()
+                .setCustomId('type_poll_input')
+                .setLabel('📩 Votos permitidos: Comision Delegada, Xunta de Alumnado, publica')
+                .setMaxLength(2)
+                .setPlaceholder('𝗣𝗼𝗿 𝗱𝗲𝗳𝗲𝗰𝘁𝗼: CD - Opciones CD/XA/T')
+                .setStyle(TextInputStyle.Short)
+                .setRequired(false);
             const secretPollInput = new TextInputBuilder()
                 .setCustomId('secret_poll_input')
                 .setLabel('🔒 ¿Es una votación secreta?')
@@ -57,155 +65,257 @@ export default {
             // Filas del Modal
             const titlePollRow = new ActionRowBuilder().addComponents(titlePollInput);
             const durationPollInputRow = new ActionRowBuilder().addComponents(durationPollInput);
+            const typePollInputRow = new ActionRowBuilder().addComponents(typePollInput);
             const secretPollInputRow = new ActionRowBuilder().addComponents(secretPollInput);
             const optionsInputRow = new ActionRowBuilder().addComponents(optionsInput);
-            modal.addComponents(titlePollRow, durationPollInputRow, secretPollInputRow, optionsInputRow);
-            // Mostrar el Modal
-            try {
-                yield interaction.showModal(modal);
-            }
-            catch (error) {
-                console.error('Modal interaction error:', error);
+            modal.addComponents(titlePollRow, durationPollInputRow, typePollInputRow, secretPollInputRow, optionsInputRow);
+
+        // Mostrar el Modal
+        try {
+            await interaction.showModal(modal);
+        } catch (error) {
+            console.error('Modal interaction error:', error);
+            return;
+        }
+
+        // MARK: Respuesta del Modal
+        try {
+            const modalSubmit = await interaction.awaitModalSubmit({
+                time: 300000, // 5 minutos
+                filter: (i) => i.customId === 'votacion_modal' && i.user.id === interaction.user.id
+            });
+
+            // MARK: Obtener Valores del Modal
+            const titlePollInputValue = modalSubmit.fields.getTextInputValue('title_poll_input');
+            const durationPollInputValue = modalSubmit.fields.getTextInputValue('duration_poll_input');
+            const typePollInputValue = modalSubmit.fields.getTextInputValue('type_poll_input').toUpperCase() || 'CD';
+            const secretPollInputValue = modalSubmit.fields.getTextInputValue('secret_poll_input').toUpperCase() || 'Y';
+            const optionsInputValue = modalSubmit.fields.getTextInputValue('poll_options_input');
+
+            await modalSubmit.deferReply();
+
+            // MARK: Validar Duración
+            const durationInSeconds = parseInt(durationPollInputValue);
+            if (isNaN(durationInSeconds) || durationInSeconds <= 0) {
+                await modalSubmit.editReply({
+                    content: '<:no:1288631410558767156> La duración debe ser un número positivo de segundos.',
+                    flags: MessageFlags.Ephemeral
+                });
                 return;
             }
-            // MARK: Respuesta del Modal
-            try {
-                const modalSubmit = yield interaction.awaitModalSubmit({
-                    time: 300000, // 5 minutos
-                    filter: (i) => i.customId === 'votacion_modal' && i.user.id === interaction.user.id
+
+            // MARK: Validar Tipo de Votación
+            if (typePollInputValue && !['CD', 'XA', 'T'].includes(typePollInputValue)) {
+                await modalSubmit.editReply({
+                    content: '<:no:1288631410558767156> El tipo de votación debe ser CD, XA o T.',
+                    flags: MessageFlags.Ephemeral
                 });
-                // Obtener Valores del Modal
-                const titlePollInputValue = modalSubmit.fields.getTextInputValue('title_poll_input');
-                const durationPollInputValue = modalSubmit.fields.getTextInputValue('duration_poll_input');
-                const secretPollInputValue = modalSubmit.fields.getTextInputValue('secret_poll_input').toUpperCase();
-                const optionsInputValue = modalSubmit.fields.getTextInputValue('poll_options_input');
-                yield modalSubmit.deferReply();
-                // Validar Duración
-                const durationInSeconds = parseInt(durationPollInputValue);
-                if (isNaN(durationInSeconds) || durationInSeconds <= 0) {
-                    yield modalSubmit.reply({
-                        content: '<:no:1288631410558767156> La duración debe ser un número positivo de segundos.',
+                return;
+            }
+
+            // MARK: Validar Opción Secreta
+            if (secretPollInputValue && secretPollInputValue !== 'Y' && secretPollInputValue !== 'N') {
+                await modalSubmit.editReply({
+                    content: '<:no:1288631410558767156> La opción secreta debe ser Y o N.',
+                    flags: MessageFlags.Ephemeral
+                });
+                return;
+            }
+
+            // MARK: Crear la Votación
+            const pollId = Date.now().toString(); // ID único para la votación
+            const poll = new DaiPoll(
+                titlePollInputValue,
+                `${modalSubmit.user}`,
+                modalSubmit.channel,
+                optionsInputValue === '' ? 'A favor, En contra, Abstención' : optionsInputValue,
+                secretPollInputValue === '' ? 'Y' : secretPollInputValue,
+                durationInSeconds
+            );
+            activePolls.set(pollId, poll); // Almacenar la votación en el mapa
+
+            // MARK: CREAR BOTONES
+            const createButtons = (disabled = false) => {
+                return poll.options.map((option) => {
+                    let style = ButtonStyle.Primary; // Por defecto, azul
+                    if (option === 'A favor') {
+                        style = ButtonStyle.Success; // Verde
+                    } else if (option === 'En contra') {
+                        style = ButtonStyle.Danger; // Rojo
+                    }
+                    return new ButtonBuilder()
+                        .setCustomId(`vote_${option}_${pollId}`) // Usar el ID único de la votación
+                        .setLabel(option)
+                        .setStyle(style)
+                        .setDisabled(disabled || !poll.status);
+                });
+            };
+
+            const buttonRow = new ActionRowBuilder().addComponents(createButtons());
+
+            // MARK: Enviar el Embed Inicial
+            const initialEmbed = await poll.embedPoll();
+            const message = await modalSubmit.editReply({ embeds: [initialEmbed], components: [buttonRow] });
+
+            // Variables para Control de Actualizaciones
+            const processingVotes = new Map();
+            let updateIntervalTime = 1000; // Por defecto 1 segundo
+            let updateTimerId = null;
+
+            // MARK: Crear Collector para Manejar Votos
+            const collector = message.createMessageComponentCollector({
+                filter: (i) => i.customId.endsWith(`_${pollId}`) && poll.status,
+                time: durationInSeconds * 1000
+            });
+
+            collector.on('collect', async (buttonInteraction) => {
+                if (!poll.status) {
+                    await buttonInteraction.reply({
+                        content: '<:no:1288631410558767156> Esta votación ya ha finalizado.',
                         flags: MessageFlags.Ephemeral
                     });
                     return;
                 }
-                // Validar Opción Secreta
-                if (secretPollInputValue !== 'Y' && secretPollInputValue !== 'N' && secretPollInputValue !== '') {
-                    yield modalSubmit.reply({
-                        content: '<:no:1288631410558767156> La opción secreta debe ser Y o N.',
+
+                if (processingVotes.has(buttonInteraction.user.id)) {
+                    await buttonInteraction.reply({
+                        content: '⏳ Por favor espera, tu voto anterior está siendo procesado.',
                         flags: MessageFlags.Ephemeral
                     });
                     return;
                 }
-                // MARK: Crear la Votación
-                const pollId = Date.now().toString(); // ID único para la votación
-                const poll = new DaiPoll(titlePollInputValue, `${modalSubmit.user}`, modalSubmit.channel, `${optionsInputValue}` === '' ? 'A favor, En contra, Abstención' : optionsInputValue, `${secretPollInputValue}` === '' ? 'Y' : secretPollInputValue, durationInSeconds);
-                activePolls.set(pollId, poll); // Almacenar la votación en el mapa
-                // MARK: Crear Botones
-                const createButtons = (disabled = false) => {
-                    return poll.options.map((option) => {
-                        let style = ButtonStyle.Primary; // Por defecto, azul
-                        if (option === 'A favor') {
-                            style = ButtonStyle.Success; // Verde
-                        }
-                        else if (option === 'En contra') {
-                            style = ButtonStyle.Danger; // Rojo
-                        }
-                        return new ButtonBuilder()
-                            .setCustomId(`vote_${option}_${pollId}`) // Usar el ID único de la votación
-                            .setLabel(option)
-                            .setStyle(style)
-                            .setDisabled(disabled || !poll.status);
-                    });
-                };
-                const buttonRow = new ActionRowBuilder().addComponents(createButtons());
-                // MARK: Enviar el Embed Inicial
-                const initialEmbed = yield poll.embedPoll();
-                const message = yield modalSubmit.editReply({ embeds: [initialEmbed], components: [buttonRow] });
-                // Variables para Control de Actualizaciones
-                const processingVotes = new Map();
-                let updateIntervalTime = 1000; // Por defecto 1 segundo
-                let updateTimerId = null;
-                // MARK: Crear Collector para Manejar Votos
-                const collector = message.createMessageComponentCollector({
-                    filter: (i) => i.customId.endsWith(`_${pollId}`) && poll.status,
-                    time: durationInSeconds * 1000
-                });
-                collector.on('collect', (buttonInteraction) => __awaiter(this, void 0, void 0, function* () {
-                    if (processingVotes.has(buttonInteraction.user.id)) {
-                        yield buttonInteraction.reply({
-                            content: '⏳ Por favor espera, tu voto anterior está siendo procesado.',
-                            flags: MessageFlags.Ephemeral
-                        });
-                        return;
-                    }
-                    processingVotes.set(buttonInteraction.user.id, true);
-                    try {
-                        yield buttonInteraction.deferUpdate();
-                        const [action, option] = buttonInteraction.customId.split('_');
-                        if (action === 'vote') {
-                            yield poll.newVote(buttonInteraction, option);
-                            // Actualizar el intervalo basado en cuántas votaciones activas hay
-                            updateIntervalTime = activePolls.size > 1 ? 3000 : 1000;
-                        }
-                    }
-                    catch (error) {
-                        console.error('Error al procesar el voto:', error);
-                        yield buttonInteraction.followUp({
-                            content: '<:no:1288631410558767156> Hubo un error al procesar tu voto.',
-                            flags: MessageFlags.Ephemeral
-                        });
-                    }
-                    finally {
-                        processingVotes.delete(buttonInteraction.user.id);
-                    }
-                }));
-                // MARK: Finalizar la Votación
-                collector.on('end', () => __awaiter(this, void 0, void 0, function* () {
-                    try {
-                        poll.status = false;
-                        const disabledButtonRow = new ActionRowBuilder().addComponents(createButtons(true));
-                        const finalEmbed = yield poll.embedPoll();
-                        yield message.edit({ embeds: [finalEmbed], components: [disabledButtonRow] });
-                        // Eliminar la votación del mapa de votaciones activas
-                        activePolls.delete(pollId);
-                        // Enviar resultados privados
-                        const secretUsers = ['789591730907381760', '843805925612847115'];
-                        yield poll.sendPrivateResults(client, secretUsers);
-                    }
-                    catch (error) {
-                        console.error('Error al finalizar la votación:', error);
-                    }
-                }));
-                // MARK: Actualizar el Embed Periódicamente con Intervalo Simplificado
-                const updatePoll = () => __awaiter(this, void 0, void 0, function* () {
-                    if (!poll.status)
-                        return;
-                    try {
-                        const updatedEmbed = yield poll.embedPoll();
-                        yield message.edit({ embeds: [updatedEmbed], components: [buttonRow] });
-                        // Comprobar cuántas votaciones hay activas y ajustar el tiempo
+
+                processingVotes.set(buttonInteraction.user.id, true);
+
+                try {
+                    await buttonInteraction.deferUpdate();
+                    const [action, option] = buttonInteraction.customId.split('_');
+                    if (action === 'vote') {
+                        await poll.newVote(buttonInteraction, option);
+                        // Actualizar el intervalo basado en cuántas votaciones activas hay
                         updateIntervalTime = activePolls.size > 1 ? 3000 : 1000;
-                        // Programar la siguiente actualización
-                        updateTimerId = setTimeout(updatePoll, updateIntervalTime);
                     }
-                    catch (error) {
-                        console.error('Error actualizando la votación:', error);
+                } catch (error) {
+                    console.error('Error al procesar el voto:', error);
+                    try {
+                        if (!buttonInteraction.replied && !buttonInteraction.deferred) {
+                            await buttonInteraction.reply({
+                                content: '<:no:1288631410558767156> Hubo un error al procesar tu voto.',
+                                flags: MessageFlags.Ephemeral
+                            });
+                        } else {
+                            await buttonInteraction.followUp({
+                                content: '<:no:1288631410558767156> Hubo un error al procesar tu voto.',
+                                flags: MessageFlags.Ephemeral
+                            });
+                        }
+                    } catch (replyError) {
+                        console.error('Error al enviar mensaje de error del voto:', replyError);
                     }
-                });
-                // Iniciar la primera actualización
-                updateTimerId = setTimeout(updatePoll, updateIntervalTime);
-                // MARK: Finalizar la Votación Después del Tiempo Indicado
-                setTimeout(() => {
+                } finally {
+                    processingVotes.delete(buttonInteraction.user.id);
+                }
+            });
+
+            // MARK: Finalizar la Votación
+            collector.on('end', async () => {
+                try {
+                    poll.status = false;
+
+                    // Limpiar el timer de actualización
+                    if (updateTimerId) {
+                        clearTimeout(updateTimerId);
+                        updateTimerId = null;
+                    }
+
+                    const disabledButtonRow = new ActionRowBuilder().addComponents(createButtons(true));
+                    const finalEmbed = await poll.embedPoll();
+                    await message.edit({ embeds: [finalEmbed], components: [disabledButtonRow] });
+
+                    // Eliminar la votación del mapa de votaciones activas
+                    activePolls.delete(pollId);
+
+                    // Enviar resultados privados
+                    const secretUsers = ['789591730907381760', '843805925612847115'];
+                    await poll.sendPrivateResults(client, secretUsers);
+                } catch (error) {
+                    console.error('Error al finalizar la votación:', error);
+                    // Asegurar que la votación se elimine del mapa incluso si hay errores
+                    activePolls.delete(pollId);
+                    if (updateTimerId) {
+                        clearTimeout(updateTimerId);
+                        updateTimerId = null;
+                    }
+                }
+            });
+
+            // MARK: Actualizar el Embed Periódicamente con Intervalo Simplificado
+            const updatePoll = async () => {
+                if (!poll.status) {
+                    return;
+                }
+
+                try {
+                    const updatedEmbed = await poll.embedPoll();
+                    await message.edit({ embeds: [updatedEmbed], components: [buttonRow] });
+
+                    // Comprobar cuántas votaciones hay activas y ajustar el tiempo
+                    updateIntervalTime = activePolls.size > 1 ? 3000 : 1000;
+
+                    // Programar la siguiente actualización
+                    updateTimerId = setTimeout(updatePoll, updateIntervalTime);
+                } catch (error) {
+                    console.error('Error actualizando la votación:', error);
+
+                    // Si hay un error al actualizar, intentar una vez más después de un tiempo
+                    if (poll.status) {
+                        updateTimerId = setTimeout(updatePoll, updateIntervalTime * 2);
+                    }
+                }
+            };
+
+            // Iniciar la primera actualización
+            updateTimerId = setTimeout(updatePoll, updateIntervalTime);
+
+            // MARK: Finalizar la Votación Después del Tiempo Indicado
+            setTimeout(() => {
+                try {
                     poll.status = false;
                     if (updateTimerId) {
                         clearTimeout(updateTimerId);
+                        updateTimerId = null;
                     }
-                }, durationInSeconds * 1000);
+                    collector.stop('time');
+                } catch (error) {
+                    console.error('Error al detener la votación por timeout:', error);
+                }
+            }, durationInSeconds * 1000);
+        } catch (error) {
+            console.error('Error en la interacción del modal:', error);
+
+            // Manejar específicamente el error de timeout del modal
+            if (error.code === 'InteractionCollectorError') {
+                // El modal expiró sin respuesta - no hay nada que hacer aquí ya que la interacción original ya no es válida
+                console.log('El modal expiró sin recibir respuesta del usuario.');
+                return;
             }
-            catch (error) {
-                console.error('Error en la interacción del modal:', error);
+
+            // Para otros errores, intentar responder si la interacción aún es válida
+            try {
+                if (interaction.deferred || interaction.replied) {
+                    await interaction.followUp({
+                        content: '<:no:1288631410558767156> Hubo un error al procesar la votación.',
+                        flags: MessageFlags.Ephemeral
+                    });
+                } else {
+                    await interaction.reply({
+                        content: '<:no:1288631410558767156> Hubo un error al procesar la votación.',
+                        flags: MessageFlags.Ephemeral
+                    });
+                }
+            } catch (replyError) {
+                console.error('Error al enviar mensaje de error:', replyError);
             }
-        });
+        }
     }
 };
