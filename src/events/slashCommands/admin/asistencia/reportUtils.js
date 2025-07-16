@@ -1,16 +1,7 @@
 import {
-    EmbedBuilder,
-    SlashCommandBuilder,
-    PermissionFlagsBits,
     TextDisplayBuilder,
     ContainerBuilder,
-    MessageFlags,
-    SectionBuilder,
-    ButtonBuilder,
-    ActionRowBuilder,
-    SeparatorBuilder,
-    UserSelectMenuBuilder,
-    ThumbnailBuilder
+    SeparatorBuilder
 } from 'discord.js'
 import { organizarParticipantesPorRol } from './roleUtils.js'
 import { roleIds } from './config.js'
@@ -36,7 +27,7 @@ export async function generarReporteReunion(reunion, guild) {
     // Organizar participantes por roles
     const participantesPorRol = await organizarParticipantesPorRol(reunion.participantes, guild)
     const inicio = new TextDisplayBuilder().setContent(
-        `# <:dai:1288623399672741930>  ${reunion.nombre}\n> <a:offline:1288631912180744205> Registro finalizado.\n> <:us:1288631396364976128> **Total de asistentes**: ${reunion.participantes.size}\n> <:chat_id:1288628721842130976> **Canal:** <#${reunion.canalId}>\n> <:reloj:1288631388945256449> Duración total: **${duracionTotal} minutos**\n> 🔹 **Inicio:** <t:${Math.floor(reunion.fechaInicio / 1000)}:R>\n> 🔹 **Fin:** <t:${Math.floor(reunion.fechaFin / 1000)}:R>
+        `### 📕 Detalles:\n# <:dai:1288623399672741930>  ${reunion.nombre}\n> <a:offline:1288631912180744205> **Registro finalizado.**\n> <:us:1288631396364976128> **Total de asistentes**: ${reunion.participantes.size}\n> <:chat_id:1288628721842130976> **Canal:** <#${reunion.canalId}>\n> <:reloj:1288631388945256449> Duración total: **${duracionTotal} minutos**\n> 🔹 **Inicio:** <t:${Math.floor(reunion.fechaInicio / 1000)}:R>\n> 🔹 **Fin:** <t:${Math.floor(reunion.fechaFin / 1000)}:R>
         ## Registro de Asistencia:`
     );
     container.addTextDisplayComponents(inicio);
@@ -46,7 +37,7 @@ export async function generarReporteReunion(reunion, guild) {
     // MARK: Añadir secciones por rol
     if (participantesPorRol.CD.directiva.length > 0) {
         const directiva = new TextDisplayBuilder().setContent(
-            '### 💼 Directiva CD'
+            '### 💼 Directiva de la Comisión Delegada:'
         );
         container.addTextDisplayComponents(directiva);
 
@@ -62,7 +53,7 @@ export async function generarReporteReunion(reunion, guild) {
             } else if (miembro.tesoreria) {
                 roleId = roleIds.CD.directiva.tesoreria
             }
-            contenidoDirectiva += `> 💠 **${miembro.displayName}** (${miembro.username}) - ${formatearTiempo(miembro.totalTime)} <@&${roleId}>\n`
+            contenidoDirectiva += `> 🔸 **${miembro.displayName}** (${miembro.username}) - ${formatearTiempo(miembro.totalTime)} <@&${roleId}>\n`
         }
         const usuariosDirectiva = new TextDisplayBuilder().setContent(contenidoDirectiva.trim())
         container.addTextDisplayComponents(usuariosDirectiva);
@@ -72,7 +63,7 @@ export async function generarReporteReunion(reunion, guild) {
     }
     if (participantesPorRol.CD.extendida.length > 0) {
         const extendida = new TextDisplayBuilder().setContent(
-            '### 💼 Directiva Extendida CD'
+            '### 💼 Directiva Extendida de la Comisión Delegada:'
         );
         container.addTextDisplayComponents(extendida);
 
@@ -88,7 +79,7 @@ export async function generarReporteReunion(reunion, guild) {
             } else if (miembro.coord_exteriores) {
                 roleId = roleIds.CD.extendida.coord_exteriores
             }
-            contenidoExtendida += `> 💠 **${miembro.displayName}** (${miembro.username}) - ${formatearTiempo(miembro.totalTime)} <@&${roleId}>\n`
+            contenidoExtendida += `> ➖ **${miembro.displayName}** (${miembro.username}) - ${formatearTiempo(miembro.totalTime)} <@&${roleId}>\n`
         }
         const usuariosExtendida = new TextDisplayBuilder().setContent(contenidoExtendida.trim())
         container.addTextDisplayComponents(usuariosExtendida);
@@ -98,7 +89,7 @@ export async function generarReporteReunion(reunion, guild) {
     }
     if (participantesPorRol.CD.miembros.length > 0) {
         const miembros = new TextDisplayBuilder().setContent(
-            '### <:us:1288631396364976128> Miembros CD'
+            '### 👮 Miembros de la Comisión Delegada:'
         );
         container.addTextDisplayComponents(miembros);
 
@@ -117,7 +108,7 @@ export async function generarReporteReunion(reunion, guild) {
     }
     if (participantesPorRol.CD.tutorandos.length > 0) {
         const tutorandos = new TextDisplayBuilder().setContent(
-            '### <:us:1288631396364976128> Tutorandos CD'
+            '### 🐕 Tutorandos de la Comisión Delegada:'
         );
         container.addTextDisplayComponents(tutorandos);
 
@@ -136,7 +127,7 @@ export async function generarReporteReunion(reunion, guild) {
     }
     if (participantesPorRol.XA.length > 0) {
         const xa = new TextDisplayBuilder().setContent(
-            '### <:us:1288631396364976128> Miembros XA'
+            '### 👷 Miembros de la Junta de Alumnado:'
         );
         container.addTextDisplayComponents(xa);
 
