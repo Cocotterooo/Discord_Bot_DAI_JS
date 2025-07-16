@@ -82,6 +82,7 @@ export default {
             new TextDisplayBuilder()
                 .setContent('-# <:dai:1288623399672741930>  Delegación de alumnado de industriales - UVigo · **Categoría de VORTEX**')
         )
+        container.setAccentColor(discordConfig.COLOR)
         await interaction.channel.send({
             flags: MessageFlags.IsComponentsV2,
             components: [container]

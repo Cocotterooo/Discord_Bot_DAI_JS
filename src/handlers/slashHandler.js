@@ -41,6 +41,23 @@ async function scanDirectoryForCommands(directory, client) {
 
 async function loadSlashCommand(filePath, client) {
   try {
+    // Lista de archivos a ignorar (archivos de utilidad, configuración, etc.)
+    const ignoredFiles = [
+      'config.js',
+      'reportUtils.js',
+      'reunionHandlers.js',
+      'reunionStore.js',
+      'roleUtils.js',
+      'voiceListeners.js'
+    ]
+
+    const fileName = filePath.split(/[\\/]/).pop()
+
+    // Ignorar archivos de utilidad
+    if (ignoredFiles.includes(fileName)) {
+      return
+    }
+
     const fileURL = pathToFileURL(filePath).href
     const commandModule = await import(fileURL)
     const command = commandModule.default || commandModule

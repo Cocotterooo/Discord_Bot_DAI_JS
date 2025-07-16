@@ -1,5 +1,6 @@
 import { SlashCommandBuilder, PermissionFlagsBits, TextDisplayBuilder, ContainerBuilder, MessageFlags, SectionBuilder, ButtonBuilder, ActionRowBuilder, SeparatorBuilder, SectionComponent } from 'discord.js'
 
+import { discordConfig } from '../../../../config.js'
 export default {
     data: new SlashCommandBuilder()
         .setName('staffroles')
@@ -95,6 +96,7 @@ export default {
         .setContent('-# <:dai:1288623399672741930>  Delegación de alumnado de industriales - UVigo  ·  **Selección de roles**')
 
         container.addTextDisplayComponents(firma)
+        container.setAccentColor(discordConfig.COLOR)
 
         await interaction.channel.send({
             flags: MessageFlags.IsComponentsV2,

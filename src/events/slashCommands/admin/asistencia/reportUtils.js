@@ -5,6 +5,7 @@ import {
 } from 'discord.js'
 import { organizarParticipantesPorRol } from './roleUtils.js'
 import { roleIds } from './config.js'
+import { discordConfig } from '../../../../../config.js'
 
 // MARK: 🕐 Formatear tiempo
 function formatearTiempo(milisegundos) {
@@ -27,7 +28,7 @@ export async function generarReporteReunion(reunion, guild) {
     // Organizar participantes por roles
     const participantesPorRol = await organizarParticipantesPorRol(reunion.participantes, guild)
     const inicio = new TextDisplayBuilder().setContent(
-        `### 📕 Detalles:\n# <:dai:1288623399672741930>  ${reunion.nombre}\n> <a:offline:1288631912180744205> **Registro finalizado.**\n> <:us:1288631396364976128> **Total de asistentes**: ${reunion.participantes.size}\n> <:chat_id:1288628721842130976> **Canal:** <#${reunion.canalId}>\n> <:reloj:1288631388945256449> Duración total: **${duracionTotal} minutos**\n> 🔹 **Inicio:** <t:${Math.floor(reunion.fechaInicio / 1000)}:R>\n> 🔹 **Fin:** <t:${Math.floor(reunion.fechaFin / 1000)}:R>
+        `\n# <:dai:1288623399672741930>  ${reunion.nombre}\n ## 📕 Detalles:\n> <a:offline:1288631912180744205> **Registro finalizado.**\n> <:us:1288631396364976128> **Total de asistentes**: ${reunion.participantes.size}\n> <:chat_id:1288628721842130976> **Canal:** <#${reunion.canalId}>\n> <:reloj:1288631388945256449> Duración total: **${duracionTotal} minutos**\n> 🔹 **Inicio:** <t:${Math.floor(reunion.fechaInicio / 1000)}:R>\n> 🔹 **Fin:** <t:${Math.floor(reunion.fechaFin / 1000)}:R>
         ## Registro de Asistencia:`
     );
     container.addTextDisplayComponents(inicio);
@@ -168,6 +169,7 @@ export async function generarReporteReunion(reunion, guild) {
     const firma = new TextDisplayBuilder()
         .setContent('-# <:dai:1288623399672741930>  Delegación de alumnado de industriales - UVigo · **Registro de Sesiones**')
     container.addTextDisplayComponents(firma);
+    container.setAccentColor(discordConfig.COLOR)
 
     return container
 }

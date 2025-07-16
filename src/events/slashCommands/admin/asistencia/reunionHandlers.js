@@ -16,6 +16,7 @@ import {
 import { getReunionActiva, setReunionActiva, clearReunionActiva } from './reunionStore.js'
 import { configurarListeners } from './voiceListeners.js'
 import { generarReporteReunion } from './reportUtils.js'
+import { discordConfig } from '../../../../../config.js'
 
 // MARK: Iniciar reunión
 export async function iniciarReunion(interaction, client) {
@@ -88,6 +89,7 @@ export async function iniciarReunion(interaction, client) {
     const firma = new TextDisplayBuilder()
         .setContent('-# <:dai:1288623399672741930>  Delegación de alumnado de industriales - UVigo · **Registro de Sesiones**')
     container.addTextDisplayComponents(firma);
+    container.setAccentColor(discordConfig.COLOR)
 
     await interaction.reply({
         flags: MessageFlags.IsComponentsV2,

@@ -88,7 +88,19 @@ function initializeButtonHandler(client) {
   client.on('interactionCreate', async (interaction) => {
     if (!interaction.isButton()) return
 
-    const button = client.buttons.get(interaction.customId)
+    // Primero buscar coincidencia exacta
+    let button = client.buttons.get(interaction.customId)
+
+    // Si no hay coincidencia exacta, buscar por prefijo para IDs dinámicos
+    if (!button) {
+      for (const [buttonId, buttonHandler] of client.buttons) {
+        if (interaction.customId.startsWith(buttonId + '_')) {
+          button = buttonHandler
+          break
+        }
+      }
+    }
+
     if (!button) return
 
     try {
