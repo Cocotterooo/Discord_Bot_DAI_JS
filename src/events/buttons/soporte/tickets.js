@@ -162,7 +162,8 @@ async function logTicketCreation(client, user, channel) {
         // Enviar mensaje con el contenedor
         await logChannel.send({
             flags: MessageFlags.IsComponentsV2,
-            components: [container]
+            components: [container],
+            allowedMentions: { parse: [] }
         });
     } catch (error) {
         console.error('Error al registrar la creación del ticket:', error);
