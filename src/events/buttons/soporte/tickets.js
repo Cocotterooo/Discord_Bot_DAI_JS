@@ -134,8 +134,35 @@ async function logTicketCreation(client, user, channel) {
             second: '2-digit'
         });
 
+        // Crear container
+        const container = new ContainerBuilder();
+
+        // Mensaje con toda la información detallada
+        const infoTicket = new TextDisplayBuilder()
+            .setContent(`## 🎫 📝 **TICKET CREADO** <@${user.id}>
+            > 📅 Fecha y hora de **creación**: \`${fechaFormateada}\`
+            ### INFORMACIÓN DEL USUARIO:
+            > 👤 **Usuario**: <@${user.id}> \`${user.username}\` 
+            ### INFORMACIÓN DEL TICKET:
+            > 🎫  **Canal**: <#${channel.id}> \`#${channel.name}\`
+            > 📍 **ID del canal**: \`${channel.id}\``
+        );
+
+        container.addTextDisplayComponents(infoTicket);
+
+        // separador
+        container.addSeparatorComponents(new SeparatorBuilder());
+
+        // firma
+        const firma = new TextDisplayBuilder()
+            .setContent('-# <:dai:1288623399672741930>  Delegación de alumnado de industriales - UVigo  ·  **Registro de ticket**');
+
+        container.addTextDisplayComponents(firma);
+
+        // Enviar mensaje con el contenedor
         await logChannel.send({
-            content: `📝 **Ticket creado** por ${user} - ${channel} ` + '- `' + `${fechaFormateada}` + '`'
+            flags: MessageFlags.IsComponentsV2,
+            components: [container]
         });
     } catch (error) {
         console.error('Error al registrar la creación del ticket:', error);

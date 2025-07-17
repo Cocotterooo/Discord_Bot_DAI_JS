@@ -1,5 +1,5 @@
 import { MessageFlags, AttachmentBuilder, ChannelType, PermissionFlagsBits, ButtonBuilder, ActionRowBuilder, EmbedBuilder, SlashCommandBuilder, TextDisplayBuilder, ContainerBuilder, SectionBuilder, SeparatorBuilder, SectionComponent, UserSelectMenuBuilder, ThumbnailBuilder, FileBuilder, Attachment } from 'discord.js';
-
+import { discordConfig } from '../../../../config.js';
 export default {
     // ID personalizado del botón para cerrar tickets
     id: 'cerrar_ticket',
@@ -32,20 +32,38 @@ export default {
 
             // Enviar mensaje privado al usuario notificando que su ticket se ha cerrado
             try {
-                const embedCierre = new EmbedBuilder()
-                    .setTitle('🔒 Ticket Cerrado')
-                    .setDescription('Tu ticket de soporte ha sido **cerrado**.')
-                    .addFields(
-                        { name: '📧 ¿Necesitas más ayuda?', value: 'Si necesitas asistencia adicional, puedes crear un nuevo ticket en el servidor de la EEI.' },
-                        { name: '🏷️ Canal', value: `#${channel.name}`, inline: true },
-                        { name: '📅 Fecha de inicio', value: `<t:${Math.floor(channel.createdTimestamp / 1000)}:F>`, inline: true },
-                        { name: '📅 Fecha de cierre', value: `<t:${Math.floor(Date.now() / 1000)}:F>`, inline: true }
-                    )
-                    .setColor(0xff6b6b)
-                    .setTimestamp()
-                    .setFooter({ text: 'Delegación de Alumnos de Industriales - UVigo' });
+                // Crear container para el mensaje de cierre
+                const container = new ContainerBuilder();
 
-                await user.send({ embeds: [embedCierre] });
+                // MARK: Mensaje Usuario
+                const mensajeCierre = new TextDisplayBuilder()
+                    .setContent(`## 🎫🔒 **TICKET CERRADO**
+                    > Tu ticket de soporte ha sido **cerrado**.
+                    ### 📧 ¿Necesitas más ayuda?
+                    > Si necesitas **asistencia adicional**, puedes **crear un nuevo ticket** en el servidor de la **EEI**.
+                    ### 📋 DETALLES DEL TICKET:
+                    > 🏷️ **Canal**: \`#${channel.name}\`
+                    > 📅 **Fecha de inicio**: <t:${Math.floor(channel.createdTimestamp / 1000)}:F>
+                    > 📅 **Fecha de cierre**: <t:${Math.floor(Date.now() / 1000)}:F>
+                    > 👤 **Cerrado por**: <@${interaction.user.id}> \`${interaction.user.tag}\``
+                );
+
+                container.addTextDisplayComponents(mensajeCierre);
+                container.setAccentColor(discordConfig.COLOR)
+
+                // separador
+                container.addSeparatorComponents(new SeparatorBuilder());
+
+                // firma
+                const firma = new TextDisplayBuilder()
+                    .setContent('-# <:dai:1288623399672741930>  Delegación de alumnado de industriales - UVigo  ·  **Sistema de tickets**');
+
+                container.addTextDisplayComponents(firma);
+
+                await user.send({
+                    flags: MessageFlags.IsComponentsV2,
+                    components: [container]
+                });
             } catch (dmError) {
                 console.log(`No se pudo enviar DM al usuario ${user.tag}: ${dmError.message}`);
                 // Enviar mensaje en el canal antes de eliminarlo
@@ -193,19 +211,28 @@ async function logTicketClosure(client, ticketInfo, channel) {
 
         container.addTextDisplayComponents(infoTicket);
 
-        // Agregar separador
+        // separador
         container.addSeparatorComponents(new SeparatorBuilder());
 
+        // Archivo de log
         const attachment = new AttachmentBuilder(buffer, { name: fileName });
-        const fileComponent = new FileBuilder().setURL('attachment://' + fileName);
+        const fileComponent = new FileBuilder({
+            file: {
+                url: `attachment://${fileName}`
+            }
+        });
+        container.addFileComponents(fileComponent);
+        // firma
+        const firma = new TextDisplayBuilder()
+            .setContent('-# <:dai:1288623399672741930>  Delegación de alumnado de industriales - UVigo  ·  **Registro de ticket**');
 
-        container.addFileComponents(attachment);
-
+        container.addTextDisplayComponents(firma);
         // Enviar mensaje con el contenedor y el archivo integrado
         await logChannel.send({
             flags: MessageFlags.IsComponentsV2,
-            components: [container, fileComponent],
-            files: [attachment]
+            files: [attachment],
+            components: [container],
+            allowedMentions: { parse: [] }
         });
     } catch (error) {
         console.error('Error al registrar el cierre del ticket:', error);
