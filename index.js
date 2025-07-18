@@ -225,6 +225,12 @@ client.on('ready', async () => {
 
     await loadServices();
     console.log('✅ Servicios cargados correctamente'.green);
+
+    // Limpiar canales de voz personalizados existentes
+    console.log('🔄 Limpiando canales de voz personalizados...'.blue);
+    const { cleanupExistingChannels } = await import('./src/events/buttons/canales_voz/voiceChannelHandler.js');
+    await cleanupExistingChannels(client);
+    console.log('✅ Limpieza de canales completada'.green);
   } catch (error) {
     console.error('❌ Error durante la inicialización:'.red, error);
     stateError(client);
